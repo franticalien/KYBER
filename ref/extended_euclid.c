@@ -15,6 +15,9 @@ static void poly_mul(poly *r, poly *a, poly *b)
 	poly_reduce(r);
 }
 
+/*
+* Checks if poly  is identically zero or not
+*/
 uint8_t check_zero(poly *a)
 {
     uint8_t res = 1;
@@ -25,6 +28,9 @@ uint8_t check_zero(poly *a)
     }
     return res;
 }
+/*
+* Sets all coeffs equal to 0
+*/
 static void clean(poly *a)
 {
     for(int i=0; i<KYBER_N; i++)
@@ -32,6 +38,11 @@ static void clean(poly *a)
         a->coeffs[i]=0;
     }
 }
+
+
+/*
+* Sets a = b
+*/
 static void poly_setEqual(poly *a, poly *b)
 {
     for(int i=0; i<KYBER_N; i++)
@@ -39,6 +50,9 @@ static void poly_setEqual(poly *a, poly *b)
         a->coeffs[i] = b->coeffs[i];
     }
 }
+/*
+* Finds STD for which sa+tb=d
+*/
 static void poly_extended_gcd(poly *a, poly *b, poly *s, poly *t, poly *d)
 {
     poly *s1;
