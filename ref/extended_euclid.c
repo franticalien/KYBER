@@ -55,12 +55,12 @@ static void poly_setEqual(poly *a, poly *b)
 */
 static void poly_extended_gcd(poly *a, poly *b, poly *s, poly *t, poly *d)
 {
-    poly *s1;
-    poly *s2;
-    poly *t1;
-    poly *t2;
-    poly *q;
-    poly *r;
+    poly *s1 = malloc(sizeof(poly));
+    poly *s2 = malloc(sizeof(poly));
+    poly *t1 = malloc(sizeof(poly));
+    poly *t2 = malloc(sizeof(poly));
+    poly *q = malloc(sizeof(poly));
+    poly *r = malloc(sizeof(poly));
     clean(t1);
     clean(t2);
     clean(s1);
@@ -74,7 +74,7 @@ static void poly_extended_gcd(poly *a, poly *b, poly *s, poly *t, poly *d)
         clean(q);
         clean(r);
         poly_divide(a,b,q,r);
-        poly *temp;
+        poly *temp = malloc(sizeof(poly));
         clean(temp);
         poly_mul(temp,q,s1);
         poly_sub(s,s2,temp);
