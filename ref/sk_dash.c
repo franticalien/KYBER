@@ -10,12 +10,12 @@
 #include "ntt.h"
 #include "symmetric.h"
 #include "randombytes.h"
-#include "inverse.c"
+#include "inverse.h"
 
 /*
 Sets sk = sk' given pk; sk'=(A^-1)t
 */
-void indcpa_get_sk(uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES], 
+static void indcpa_get_sk(uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES], 
 				   const uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES])
 {
 	uint8_t seed[KYBER_SYMBYTES];
@@ -35,7 +35,10 @@ void indcpa_get_sk(uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES],
     pack_sk(sk, &skpv);
 }
 
-int crypto_kem_get_sk(uint8_t *sk,
+/*
+Sets sk = sk' given pk; sk'=(A^-1)t and adds random symbytes to sk.
+*/
+static int crypto_kem_get_sk(uint8_t *sk,
                        uint8_t *pk)
 {
 	size_t i;
@@ -45,15 +48,11 @@ int crypto_kem_get_sk(uint8_t *sk,
   	hash_h(sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
   	/* Value z for pseudo-random output on reject */
   	randombytes(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, KYBER_SYMBYTES);
-  	// for(int i=0;i<KYBER_SYMBYTES;i++)
-  	// {
-    // 	*(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES+i) = 0; 
-  	// }
 	return 0;
 
 }
 
-int16_t calc_diff(uint8_t *m1, uint8_t *m2)
+static int16_t calc_diff(uint8_t *m1, uint8_t *m2)
 {
 	int16_t diff = 0;
 	for(int i=0; i<CRYPTO_BYTES; i++)
@@ -66,7 +65,7 @@ int16_t calc_diff(uint8_t *m1, uint8_t *m2)
 	return diff;
 }
 
-int16_t get_error(uint8_t *m, uint8_t *m_dash) // uint8_t m[CRYPTO_BYTES]
+static int16_t get_m_dash(uint8_t *m, uint8_t *m_dash) // uint8_t m[CRYPTO_BYTES]
 {
 	uint8_t pk[CRYPTO_PUBLICKEYBYTES];
     uint8_t sk[CRYPTO_SECRETKEYBYTES];
@@ -127,25 +126,26 @@ int16_t get_error(uint8_t *m, uint8_t *m_dash) // uint8_t m[CRYPTO_BYTES]
 
 int main()
 {
+	printf("TEST_SK_DASH\n");
+
 	uint8_t m[CRYPTO_BYTES],m_dash[CRYPTO_BYTES];
 	
-	for(int i=0; i<CRYPTO_BYTES; i++)
-	{
-		m[i] = i;
-	}
-	get_error(m,m_dash);
-	for(int i=0;i<CRYPTO_BYTES;i++)
-	{
-		printf("%d ",m[i]);
-	}
-	printf("\n");
-	
-	for(int i=0;i<CRYPTO_BYTES;i++)
-	{
-		printf("%d ",m_dash[i]);
-	}
-	printf("\n---------------------------\n");
+	printf("\n-----------------------------------------------------------\n");
 
-	printf("TEST_SK_DASH.");
+	get_m_dash(m,m_dash);
+
+	printf("m_orig = [ ");
+	for(int i=0;i<CRYPTO_BYTES;i++)
+		printf("%d ",m[i]);
+
+	printf("]\n\n");
+	
+	printf("m_dash = [ ");
+	for(int i=0;i<CRYPTO_BYTES;i++)
+		printf("%d ",m_dash[i]);
+
+	printf("]\n-----------------------------------------------------------\n");
+	
+
 	return 0;
 }

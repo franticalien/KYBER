@@ -71,8 +71,8 @@ libpqcrystals_kyber768_ref.so: $(SOURCES) $(HEADERS) symmetric-shake.c
 libpqcrystals_kyber1024_ref.so: $(SOURCES) $(HEADERS) symmetric-shake.c
 	$(CC) -shared -fPIC $(CFLAGS) -DKYBER_K=4 $(SOURCES) symmetric-shake.c -o libpqcrystals_kyber1024_ref.so
 
-test_sk_dash: $(SOURCESKECCAK) $(HEADERSKECCAK) sk_dash.c randombytes.c
-	$(CC) $(CFLAGS) -DKYBER_K=2 $(SOURCESKECCAK) sk_dash.c randombytes.c -o test_sk_dash
+test_sk_dash: $(SOURCESKECCAK) $(HEADERSKECCAK) sk_dash.c randombytes.c inverse.c
+	$(CC) $(CFLAGS) -DKYBER_K=2 $(SOURCESKECCAK) sk_dash.c randombytes.c inverse.c -o test_sk_dash
 
 test_inverse: $(SOURCESKECCAK) $(HEADERSKECCAK) inverse.c randombytes.c
 	$(CC) $(CFLAGS) -DKYBER_K=2 $(SOURCESKECCAK) inverse.c randombytes.c -o test_inverse
