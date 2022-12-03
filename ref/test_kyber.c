@@ -4,7 +4,7 @@
 #include "kem.h"
 #include "randombytes.h"
 
-#define NTESTS 1000
+#define NTESTS 3
 
 static int test_keys()
 {
@@ -27,6 +27,17 @@ static int test_keys()
     printf("ERROR keys\n");
     return 1;
   }
+  // printf("\nKEY_B:\n");
+  // for(int i=0;i<CRYPTO_BYTES;i++)
+  // {
+  //   printf("%d ",key_b[i]);
+  // }
+  // printf("\nKEY_A:\n");
+  // for(int i=0;i<CRYPTO_BYTES;i++)
+  // {
+  //   printf("%d ",key_a[i]);
+  // }
+  // printf("\n---------------------------\n");
 
   return 0;
 }

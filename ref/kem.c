@@ -30,6 +30,10 @@ int crypto_kem_keypair(uint8_t *pk,
   hash_h(sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
   /* Value z for pseudo-random output on reject */
   randombytes(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, KYBER_SYMBYTES);
+  // for(int i=0;i<KYBER_SYMBYTES;i++)
+  // {
+  //   *(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES+i) = 0; 
+  // }
   return 0;
 }
 

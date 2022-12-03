@@ -45,7 +45,11 @@ int crypto_kem_get_sk(uint8_t *sk,
   	hash_h(sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
   	/* Value z for pseudo-random output on reject */
   	randombytes(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, KYBER_SYMBYTES);
-  	return 0;
+  	// for(int i=0;i<KYBER_SYMBYTES;i++)
+  	// {
+    // 	*(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES+i) = 0; 
+  	// }
+	return 0;
 
 }
 
@@ -62,13 +66,17 @@ int16_t calc_diff(uint8_t *m1, uint8_t *m2)
 	return diff;
 }
 
-int16_t get_error(uint8_t *m) // uint8_t m[CRYPTO_BYTES]
+int16_t get_error(uint8_t *m, uint8_t *m_dash) // uint8_t m[CRYPTO_BYTES]
 {
 	uint8_t pk[CRYPTO_PUBLICKEYBYTES];
     uint8_t sk[CRYPTO_SECRETKEYBYTES];
     uint8_t sk_dash[CRYPTO_SECRETKEYBYTES];
   	uint8_t ct[CRYPTO_CIPHERTEXTBYTES];
-  	uint8_t m_dash[CRYPTO_BYTES];
+
+	for(int i=0;i<CRYPTO_SECRETKEYBYTES;i++)
+	{
+		sk_dash[i]=0;
+	}
 
   	//Alice generates a public key
   	crypto_kem_keypair(pk, sk);
@@ -79,6 +87,38 @@ int16_t get_error(uint8_t *m) // uint8_t m[CRYPTO_BYTES]
   	//We create another secret key from pk
   	crypto_kem_get_sk(sk_dash, pk);
 
+	// printf("\nSK:\n ");
+	// for(int i=0;i<KYBER_SECRETKEYBYTES;i++)
+	// {
+	// 	printf("%d ",sk[i]);
+	// }
+	// printf("\nSK_dash:\n ");
+	// for(int i=0;i<KYBER_SECRETKEYBYTES;i++)
+	// {
+	// 	printf("%d ",sk_dash[i]);
+	// }	
+	// printf("\n");
+
+	// uint16_t flag =1;
+	// for(int i=0;i<KYBER_SECRETKEYBYTES;i++)
+	// {
+	// 	if(sk[i]!=sk_dash[i])
+	// 	{
+	// 		flag=0;
+			
+	// 		printf("\nNot equal at index: %d\n", i);
+	// 	}
+
+	// }		
+	// if(flag)
+	// {
+	// 	printf("\n-------------SK=SK_DASH!!-----------\n");
+	// }
+	// else
+	// {
+	// 	printf("\n-------------SK!=SK_DASH!!-----------\n");
+	// }
+
   	//Alice uses Bobs response and new secret key to regenerate response
   	crypto_kem_dec(m_dash, ct, sk_dash);
 
@@ -87,6 +127,25 @@ int16_t get_error(uint8_t *m) // uint8_t m[CRYPTO_BYTES]
 
 int main()
 {
+	uint8_t m[CRYPTO_BYTES],m_dash[CRYPTO_BYTES];
+	
+	for(int i=0; i<CRYPTO_BYTES; i++)
+	{
+		m[i] = i;
+	}
+	get_error(m,m_dash);
+	for(int i=0;i<CRYPTO_BYTES;i++)
+	{
+		printf("%d ",m[i]);
+	}
+	printf("\n");
+	
+	for(int i=0;i<CRYPTO_BYTES;i++)
+	{
+		printf("%d ",m_dash[i]);
+	}
+	printf("\n---------------------------\n");
+
 	printf("TEST_SK_DASH.");
 	return 0;
 }
