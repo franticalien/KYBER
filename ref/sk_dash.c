@@ -12,6 +12,9 @@
 #include "randombytes.h"
 #include "inverse.c"
 
+/*
+Sets sk = sk' given pk; sk'=(A^-1)t
+*/
 void indcpa_get_sk(uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES], 
 				   const uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES])
 {
@@ -19,6 +22,7 @@ void indcpa_get_sk(uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES],
 	polyvec pkpv, a[KYBER_K], a_inv[KYBER_K], skpv;
 
 	unpack_pk(&pkpv,seed,pk);
+	
 	gen_matrix(a, seed,0);
 	mat_inv_2(a_inv,a);
 

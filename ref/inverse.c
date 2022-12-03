@@ -262,9 +262,73 @@ void mat_inv_2(polyvec *b, polyvec *a)
 	poly_reduce(&b[1].vec[0]); poly_reduce(&b[1].vec[1]);
 }
 
-int main()
+
+
+void mat_mul(polyvec* a, polyvec *b, polyvec* c)
 {
-	printf("TEST.");
-	return 0;
+	poly temp1,temp2;
+	poly_basemul_montgomery(&temp1,&a[0].vec[0],&b[0].vec[0]);
+	poly_basemul_montgomery(&temp2,&a[0].vec[1],&b[1].vec[0]);
+	poly_add(&c[0].vec[0],&temp1,&temp2);
+	poly_tomont(&c[0].vec[0]);
+	poly_red(&c[0].vec[0]);
+
+	poly_basemul_montgomery(&temp1,&a[0].vec[0],&b[0].vec[1]);
+	poly_basemul_montgomery(&temp2,&a[0].vec[1],&b[1].vec[1]);
+	poly_add(&c[0].vec[1],&temp1,&temp2);
+	poly_tomont(&c[0].vec[1]);
+	poly_red(&c[0].vec[1]);
+
+	poly_basemul_montgomery(&temp1,&a[1].vec[0],&b[0].vec[0]);
+	poly_basemul_montgomery(&temp2,&a[1].vec[1],&b[1].vec[0]);
+	poly_add(&c[1].vec[0],&temp1,&temp2);
+	poly_tomont(&c[1].vec[0]);
+	poly_red(&c[1].vec[0]);
+
+	poly_basemul_montgomery(&temp1,&a[1].vec[0],&b[0].vec[1]);
+	poly_basemul_montgomery(&temp2,&a[1].vec[1],&b[1].vec[1]);
+	poly_add(&c[1].vec[1],&temp1,&temp2);
+	poly_tomont(&c[1].vec[1]);
+	poly_red(&c[1].vec[1]);
 }
+
+void mat2_print(polyvec* a)
+{
+	printf("----------------------\n");
+	poly_print(&a[0].vec[0]);
+	printf("\n");
+	poly_print(&a[0].vec[1]);
+	printf("\n");
+	poly_print(&a[1].vec[0]);
+	printf("\n");
+	poly_print(&a[1].vec[1]);
+	printf("----------------------\n");
+}
+
+static void gen_mat2(polyvec *a, uint16_t seed)
+{
+	for(int i=0; i<KYBER_K; i++)
+	{
+		for(int j=0; j<KYBER_K; j++)
+		{
+			for(int k=0; k<KYBER_N; k++)
+			{
+				a[i].vec[j].coeffs[k] = (i+j+k+seed)*(i+j+k+seed)%KYBER_Q;
+			}
+			poly_ntt(&a[i].vec[j]);
+		}
+	}
+}
+
+// int main()
+// {
+// 	printf("TEST.");
+// 	polyvec a[KYBER_K],b[KYBER_K],c[KYBER_K];
+// 	gen_mat2(a,69);
+// 	mat2_print(&a);
+// 	mat_inv_2(&b,&a);
+// 	mat_mul(&a,&b,&c);
+// 	mat2_print(&c);
+// 	return 0;
+// }
 
