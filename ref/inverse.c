@@ -1,17 +1,15 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "params.h"
 #include "poly.h"
 #include "polyvec.h"
 #include "ntt.h"
-#include <stdlib.h>
 
 void poly_print(poly *a)
 {
 	for(int i=0 ; i<KYBER_N ;i++)
-	{
 		printf("%d ", a->coeffs[i]);
-	}
 	printf("\n");
 }
 
@@ -22,21 +20,18 @@ uint8_t check_zero(poly *a)
 {
     uint8_t res = 1;
     for(int i=0; i<KYBER_N; i++)
-    {
         if(a->coeffs[i]!=0)
             res = 0;
-    }
     return res;
 }
+
 /*
 * Sets all coeffs equal to 0
 */
 void clean(poly *a)
 {
     for(int i=0; i<KYBER_N; i++)
-    {
         a->coeffs[i]=0;
-    }
 }
 
 
@@ -46,9 +41,7 @@ void clean(poly *a)
 void poly_setEqual(poly *a, poly *b)
 {
     for(int i=0; i<KYBER_N; i++)
-    {
         a->coeffs[i] = b->coeffs[i];
-    }
 }
 
 void poly_red(poly *a)
@@ -62,6 +55,7 @@ static void poly_mul(poly *r, poly *a, poly *b)
 	poly x,y;
 	poly_setEqual(&x,a);
 	poly_setEqual(&y,b);
+
 	poly_ntt(&x);
 	poly_ntt(&y);
 
@@ -71,10 +65,9 @@ static void poly_mul(poly *r, poly *a, poly *b)
 	poly_red(r);
 }
 
-
 static int16_t fqinv(int16_t x)
 {
-	int32_t res = 1, z = x, b = KYBER_Q-2;
+	int32_t res = 1, z = ((x%KYBER_Q)+KYBER_Q)%KYBER_Q, b = KYBER_Q-2;
 	while(b>0){
 		if(b&1) res = res*z % KYBER_Q;
 		z = z*z % KYBER_Q;
@@ -100,14 +93,14 @@ static void poly_div(poly *q, poly *r, poly *a, poly *b, uint8_t flag)
 		q->coeffs[i] = 0;
 		r->coeffs[i] = a->coeffs[i];
 	}
-	if(flag)   //ensure d>=1
-	{
-		if(d==0)
-		{
+
+	if(flag){
+		if(d==0){
 			clean(r);
 			poly_setEqual(q,a);
 			return;
 		}
+
 		q->coeffs[256-d] = z;
 		for(int j=0; j<d; j++){
 			tmp = (q->coeffs[256-d])*(b->coeffs[j]) % KYBER_Q;
@@ -129,161 +122,137 @@ static void poly_div(poly *q, poly *r, poly *a, poly *b, uint8_t flag)
 
 
 /*
-* Finds STD for which sa+tb=d
+* Finds STD for which sA + tB = d
 */
-static void poly_extended_gcd(poly *a, poly *b, poly *s, poly *t, poly *d)
+static void poly_extended_gcd(poly *A, poly *B, poly *s, poly *t, poly *d)
 {
-    poly *s1 = malloc(sizeof(poly));
-    poly *s2 = malloc(sizeof(poly));
-    poly *t1 = malloc(sizeof(poly));
-    poly *t2 = malloc(sizeof(poly));
-    poly *q = malloc(sizeof(poly));
-    poly *r = malloc(sizeof(poly));
-    clean(t1); clean(t2);
-    clean(s1); clean(s2);
-    clean(q); clean(r);
-    s2->coeffs[0] = 1;
-    t1->coeffs[0] = 1;
+    poly a,b,s1,s2,t1,t2,q,r,temp;
+    poly_setEqual(&a,A); poly_setEqual(&b,B);
+    clean(&t1); clean(&t2);
+    clean(&s1); clean(&s2);
+    s2.coeffs[0] = 1;
+    t1.coeffs[0] = 1;
 
-    while(!check_zero(b))
+    while(!check_zero(&b))
     {
-		clean(q); clean(r);
-        poly_div(q,r,a,b,0);
+        poly_div(&q,&r,&a,&b,0);
 
-        poly *temp = malloc(sizeof(poly));
-        clean(temp);
+        poly_mul(&temp,&q,&s1);
+        poly_sub(s,&s2,&temp);
 
-        poly_mul(temp,q,s1);
-        poly_sub(s,s2,temp);
-        clean(temp);
-        poly_mul(temp,q,t1);
-        poly_sub(t,t2,temp);
-        poly_setEqual(a,b);
-        poly_setEqual(b,r);
-        poly_setEqual(s2,s1);
-        poly_setEqual(s1,s);
-        poly_setEqual(t2,t1);
-        poly_setEqual(t1,t);
+        poly_mul(&temp,&q,&t1);
+        poly_sub(t,&t2,&temp);
+
+        poly_setEqual(&a,&b); poly_setEqual(&b,&r);
+        poly_setEqual(&s2,&s1); poly_setEqual(&s1,s);
+        poly_setEqual(&t2,&t1); poly_setEqual(&t1,t);
     }
 
-    poly_setEqual(d,a);
-    poly_setEqual(s,s2);
-    poly_setEqual(t,t2);
+    poly_setEqual(d,&a); poly_setEqual(s,&s2); poly_setEqual(t,&t2);
 }
 
-static void poly_gcd(poly *a, poly *b, poly *x, poly *y, poly *d)
-{
-	poly d0,d1,d2,x0,x1,x2,y0,y1,y2,q,r,tmp;
-	poly_setEqual(&d0,a);
-	poly_setEqual(&d1,b);
-	clean(&x0); clean(&x1);
-	clean(&y0); clean(&y1);
-	x0.coeffs[0] = 1;
-	y1.coeffs[0] = 1;
+// static void poly_extended_gcd(poly *a, poly *b, poly *x, poly *y, poly *d)
+// {
+// 	poly d0,d1,d2,x0,x1,x2,y0,y1,y2,q,r,tmp;
+// 	poly_setEqual(&d0,a);
+// 	poly_setEqual(&d1,b);
+// 	clean(&x0); clean(&x1);
+// 	clean(&y0); clean(&y1);
+// 	x0.coeffs[0] = 1;
+// 	y1.coeffs[0] = 1;
 
-	while(!check_zero(&d1)){
-		poly_div(&q,&r,&d0,&d1,0);
+// 	while(!check_zero(&d1)){
+// 		poly_setEqual(&d2,&d1); poly_setEqual(&x2,&x1); poly_setEqual(&y2,&y1);
 
-		poly_setEqual(&d2,&d1); poly_setEqual(&x2,&x1); poly_setEqual(&y2,&y1);
+// 		poly_div(&q,&r,&d0,&d1,0);
+// 		poly_setEqual(&d1,&r);
 
-		poly_setEqual(&d1,&r);
+// 		poly_mul(&tmp,&q,&x1);
+// 		poly_sub(&x1,&x0,&tmp);
+// 		poly_red(&x1);
 
-		poly_mul(&tmp,&q,&x1);
-		poly_sub(&x1,&x0,&tmp);
+// 		poly_mul(&tmp,&q,&y1);
+// 		poly_sub(&y1,&y0,&tmp);
+// 		poly_red(&y1);
 
-		poly_mul(&tmp,&q,&y1);
-		poly_sub(&y1,&y0,&tmp);
+// 		poly_setEqual(&d0,&d2); poly_setEqual(&x0,&x2); poly_setEqual(&y0,&y2);
+// 	}
 
-		poly_red(&x1);
-		poly_red(&y1);
-
-		poly_setEqual(&d0,&d2); poly_setEqual(&x0,&x2); poly_setEqual(&y0,&y2);
-	}
-
-	poly_setEqual(d,&d0); poly_setEqual(x,&x0); poly_setEqual(y,&y0);
-}
+// 	poly_setEqual(d,&d0); poly_setEqual(x,&x0); poly_setEqual(y,&y0);
+// }
 
 static void poly_inv(poly *b, poly *c)
 {
-	poly a;
+	poly a,q,r,s,t,d,temp;
+
+	poly_red(b);
 	clean(&a);
 	a.coeffs[0]=1;
 
-	poly_red(b);
-
-	poly q,r;
-	clean(&q);
-	clean(&r);
 	poly_div(&q,&r,&a,b,1);
+	poly_extended_gcd(b,&r,&s,&t,&d);
 
-	poly s,t,d;
-	clean(&s);
-	clean(&t);
-	clean(&d);
-	poly_gcd(b,&r,&s,&t,&d);
-
-	poly temp;
-	clean(&temp);
 	poly_mul(&temp,&t,&q);
 	poly_sub(c,&s,&temp);
 	poly_red(c);
+
+	poly_mul(&temp,b,c);
+	int16_t z = fqinv(temp.coeffs[0]);
+
+	int32_t tmp = 0;
+	for(int i=0; i<256; i++){
+		tmp = z*(c->coeffs[i]) % KYBER_Q;
+		c->coeffs[i] = tmp;
+	}
+
+	// ---------------- confirmation ------------------
+		poly x;
+		poly_mul(&x,b,c);
+		x.coeffs[0] -= 1;
+		if(!check_zero(&x))
+			printf("ERROR: Inverse is Wrongly Calculated.\n");
+		fflush(stdout);
+	// -------------------------------------------------
+}
+
+static void baseinv(int16_t r[2], const int16_t a[2], int16_t zeta)
+{
+	int16_t d = fqmul(a[1], a[1]);
+	d = fqmul(d, zeta);
+	d -= fqmul(a[0], a[0]);
+	d = fqinv(d);
+	r[0] = fqmul(-a[0], d);
+	r[1] = fqmul( a[1], d);
+}
+
+static void poly_ntt_inv(poly *r, const poly *a)
+{
+	unsigned int i;
+	for(i=0;i<KYBER_N/4;i++) {
+	   baseinv(&r->coeffs[4*i], &a->coeffs[4*i], zetas[64+i]);
+	   baseinv(&r->coeffs[4*i+2], &a->coeffs[4*i+2], -zetas[64+i]);
+  }
 }
 
 int main()
 {
-	poly a,b,s,t,d;
-	clean(&a);
-	clean(&b);
-	clean(&s);
-	clean(&t);
-	clean(&d);	
+	poly p,z;
 
-  	a.coeffs[4] = 1;
-	a.coeffs[1] = 0;
-	a.coeffs[0] = 0;
-  	b.coeffs[0] = 1;
-	b.coeffs[1] = 0; 
-  	b.coeffs[2] = 0;
+	for(int i=0; i<256; i++)
+		p.coeffs[i] = i*(i+2) % KYBER_Q;
 
- //  	poly_extended_gcd(&a,&b,&s,&t,&d);
+	poly_inv(&p,&z);
 
- //  	poly_print(&s);
-	// poly_print(&t);
-	// poly_print(&d);
+	poly x;
+	poly_mul(&x,&p,&z);
+	poly_red(&x);
 
-
-	poly_inv(&a,&s);
-	poly_print(&s);
+	x.coeffs[0] -= 1;
+	if(check_zero(&x))
+		printf("SUCCESS\n");
+	else
+		printf("FAIL\n");
 
   	return 0;
 }
 
-
-// int main()
-// {
-// 	poly a,b,q,r,c;
-
-// 	for(int i=0; i<250; i++){
-// 		a.coeffs[i] = (KYBER_Q + (a.coeffs[i] % KYBER_Q)) % KYBER_Q;
-// 		b.coeffs[i] = (KYBER_Q + (b.coeffs[i] % KYBER_Q)) % KYBER_Q;
-// 	}
-
-// 	for(int i=100; i<256; i++)
-// 		b.coeffs[i] = 0;
-
-//   	poly_div(&q,&r,&a,&b);
-
-//   	test_poly_mul(&c,&b,&q);
-
-//   	for(int i=0; i<256; i++)
-//   		c.coeffs[i] = (KYBER_Q + (c.coeffs[i] + r.coeffs[i]) % KYBER_Q) % KYBER_Q;
-
-//   	for(int i=0; i<256; i++)
-//   		if(c.coeffs[i] % KYBER_Q != a.coeffs[i] % KYBER_Q){
-//   			printf("FAIL");
-//   			return 0;
-//   		}
-//   	printf("SUCCESS.");
-
-//   	return 0;
-// }
