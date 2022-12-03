@@ -1,5 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "params.h"
 #include "indcpa.h"
 #include "polyvec.h"
@@ -328,3 +330,109 @@ void indcpa_dec(uint8_t m[KYBER_INDCPA_MSGBYTES],
   poly_tomsg(m, &mp);
 }
 
+//---------------------------------modded versions-----------------------------------
+
+
+void indcpa_keypair_mod(uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
+                    uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES], int flag)
+{
+  unsigned int i;
+  uint8_t buf[2*KYBER_SYMBYTES];
+  const uint8_t *publicseed = buf;
+  const uint8_t *noiseseed = buf+KYBER_SYMBYTES;
+  uint8_t nonce = 0;
+  polyvec a[KYBER_K], e, pkpv, skpv;
+
+  randombytes(buf, KYBER_SYMBYTES);
+  hash_g(buf, buf, KYBER_SYMBYTES);
+
+  gen_a(a, publicseed);
+
+  for(i=0;i<KYBER_K;i++)
+    poly_getnoise_eta1(&skpv.vec[i], noiseseed, nonce++);
+  for(i=0;i<KYBER_K;i++)
+    poly_getnoise_eta1(&e.vec[i], noiseseed, nonce++);
+
+  polyvec_ntt(&skpv);
+  polyvec_ntt(&e);
+
+  // matrix-vector multiplication
+  for(i=0;i<KYBER_K;i++) {
+    polyvec_basemul_acc_montgomery(&pkpv.vec[i], &a[i], &skpv);
+    poly_tomont(&pkpv.vec[i]);
+  }
+
+  if(flag != 1)
+    polyvec_add(&pkpv, &pkpv, &e);
+  polyvec_reduce(&pkpv);
+
+  pack_sk(sk, &skpv);
+  pack_pk(pk, &pkpv, publicseed);
+}
+
+void indcpa_enc_mod(uint8_t c[KYBER_INDCPA_BYTES],
+                const uint8_t m[KYBER_INDCPA_MSGBYTES],
+                const uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
+                const uint8_t coins[KYBER_SYMBYTES], poly *p)
+{
+  unsigned int i;
+  uint8_t seed[KYBER_SYMBYTES];
+  uint8_t nonce = 0;
+  polyvec sp, pkpv, ep, at[KYBER_K], b;
+  poly v, k, epp;
+
+  unpack_pk(&pkpv, seed, pk);
+  poly_frommsg(&k, m);
+  gen_at(at, seed);
+
+  for(i=0;i<KYBER_K;i++)
+    poly_getnoise_eta1(sp.vec+i, coins, nonce++);
+  for(i=0;i<KYBER_K;i++)
+    poly_getnoise_eta2(ep.vec+i, coins, nonce++);
+  poly_getnoise_eta2(&epp, coins, nonce++);
+
+  polyvec_ntt(&sp);
+
+  // matrix-vector multiplication
+  for(i=0;i<KYBER_K;i++)
+    polyvec_basemul_acc_montgomery(&b.vec[i], &at[i], &sp);
+
+  polyvec_basemul_acc_montgomery(&v, &pkpv, &sp);
+
+  polyvec_invntt_tomont(&b);
+  poly_invntt_tomont(&v);
+
+  polyvec_add(&b, &b, &ep);
+  poly_add(&v, &v, &epp);
+  poly_add(&v, &v, &k);
+  polyvec_reduce(&b);
+  poly_reduce(&v);
+
+  for(i=0; i<256; i++)
+    p->coeffs[i] = k.coeffs[i];
+
+  pack_ciphertext(c, &b, &v);
+}
+
+void indcpa_dec_mod(uint8_t m[KYBER_INDCPA_MSGBYTES],
+                const uint8_t c[KYBER_INDCPA_BYTES],
+                const uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES], poly *p)
+{
+  polyvec b, skpv;
+  poly v, mp;
+
+  unpack_ciphertext(&b, &v, c);
+  unpack_sk(&skpv, sk);
+
+  polyvec_ntt(&b);
+  polyvec_basemul_acc_montgomery(&mp, &skpv, &b);
+  poly_invntt_tomont(&mp);
+
+  poly_sub(&mp, &v, &mp);
+  poly_reduce(&mp);
+
+  for(int i=0; i<256; i++)
+    p->coeffs[i] = mp.coeffs[i];
+
+  poly_tomsg(m, &mp);
+}

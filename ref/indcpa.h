@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "params.h"
 #include "polyvec.h"
+#include "poly.h"
 
 #define gen_matrix KYBER_NAMESPACE(gen_matrix)
 void gen_matrix(polyvec *a, const uint8_t seed[KYBER_SYMBYTES], int transposed);
@@ -33,5 +34,17 @@ void unpack_pk(polyvec *pk,
 void pack_sk(uint8_t r[KYBER_INDCPA_SECRETKEYBYTES], polyvec *sk);
 
 void unpack_sk(polyvec *sk, const uint8_t packedsk[KYBER_INDCPA_SECRETKEYBYTES]);
+
+void indcpa_keypair_mod(uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
+                    uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES], int flag);
+
+void indcpa_enc_mod(uint8_t c[KYBER_INDCPA_BYTES],
+                const uint8_t m[KYBER_INDCPA_MSGBYTES],
+                const uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
+                const uint8_t coins[KYBER_SYMBYTES], poly *p);
+
+void indcpa_dec_mod(uint8_t m[KYBER_INDCPA_MSGBYTES],
+                const uint8_t c[KYBER_INDCPA_BYTES],
+                const uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES], poly *p);
 
 #endif

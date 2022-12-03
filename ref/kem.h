@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "params.h"
+#include "poly.h"
 
 #define CRYPTO_SECRETKEYBYTES  KYBER_SECRETKEYBYTES
 #define CRYPTO_PUBLICKEYBYTES  KYBER_PUBLICKEYBYTES
@@ -37,5 +38,9 @@ int crypto_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk);
 
 #define crypto_kem_dec KYBER_NAMESPACE(dec)
 int crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
+
+int crypto_kem_keypair_mod(uint8_t *pk, uint8_t *sk, int flag);
+int crypto_kem_enc_mod(uint8_t *ct, uint8_t *ss, const uint8_t *pk, poly *p);
+int crypto_kem_dec_mod(uint8_t *ss, const uint8_t *ct, const uint8_t *sk, poly *p);
 
 #endif
