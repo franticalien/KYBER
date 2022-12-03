@@ -234,25 +234,37 @@ static void poly_ntt_inv(poly *r, const poly *a)
   }
 }
 
+void mat_inv_2(polyvec *b, polyvec *a)
+{
+	if(KYBER_K != 2){
+		printf("ERROR: KYBER_K != 2.");
+		return;
+	}
+
+	poly den,t1,t2;
+	poly_basemul_montgomery(&t1,&a[0].vec[0],&a[1].vec[1]);
+	poly_basemul_montgomery(&t2,&a[1].vec[0],&a[0].vec[1]);
+	poly_sub(&t1,&t1,&t2);
+	poly_reduce(&t1);
+	poly_ntt_inv(&den,&t1);
+
+	poly_basemul_montgomery(&b[0].vec[0],&a[1].vec[1],&den);
+	poly_basemul_montgomery(&b[1].vec[1],&a[0].vec[0],&den);
+	poly_basemul_montgomery(&b[1].vec[0],&a[1].vec[0],&den);
+	poly_basemul_montgomery(&b[0].vec[1],&a[0].vec[1],&den);
+
+	for(int i=0; i<256; i++){
+		b[0].vec[1].coeffs[i] *= -1;
+		b[1].vec[0].coeffs[i] *= -1;
+	}
+
+	poly_reduce(&b[0].vec[0]); poly_reduce(&b[0].vec[1]);
+	poly_reduce(&b[1].vec[0]); poly_reduce(&b[1].vec[1]);
+}
+
 int main()
 {
-	poly p,z;
-
-	for(int i=0; i<256; i++)
-		p.coeffs[i] = i*(i+2) % KYBER_Q;
-
-	poly_inv(&p,&z);
-
-	poly x;
-	poly_mul(&x,&p,&z);
-	poly_red(&x);
-
-	x.coeffs[0] -= 1;
-	if(check_zero(&x))
-		printf("SUCCESS\n");
-	else
-		printf("FAIL\n");
-
-  	return 0;
+	printf("TEST.");
+	return 0;
 }
 

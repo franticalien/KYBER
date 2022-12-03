@@ -4,7 +4,7 @@
 #include <string.h>
 #include "kem.h"
 #include "params.h"
-#include "indcpa.c"
+#include "indcpa.h"
 #include "polyvec.h"
 #include "poly.h"
 #include "ntt.h"
@@ -83,6 +83,6 @@ int16_t get_error(uint8_t *m) // uint8_t m[CRYPTO_BYTES]
 
 int main()
 {
-
+	printf("TEST_SK_DASH.");
 	return 0;
 }

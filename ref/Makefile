@@ -7,7 +7,7 @@ RM = /bin/rm
 SOURCES = kex.c kem.c indcpa.c polyvec.c poly.c ntt.c cbd.c reduce.c verify.c
 SOURCESKECCAK = $(SOURCES) fips202.c symmetric-shake.c
 SOURCESNINETIES = $(SOURCES) sha256.c sha512.c aes256ctr.c symmetric-aes.c
-HEADERS = params.h kex.h kem.h indcpa.h polyvec.h poly.h ntt.h cbd.h reduce.c verify.h symmetric.h
+HEADERS = params.h kex.h kem.h indcpa.h polyvec.h poly.h ntt.h cbd.h reduce.c verify.h symmetric.h inverse.h
 HEADERSKECCAK = $(HEADERS) fips202.h
 HEADERSNINETIES = $(HEADERS) aes256ctr.h sha2.h
 
@@ -70,6 +70,9 @@ libpqcrystals_kyber768_ref.so: $(SOURCES) $(HEADERS) symmetric-shake.c
 
 libpqcrystals_kyber1024_ref.so: $(SOURCES) $(HEADERS) symmetric-shake.c
 	$(CC) -shared -fPIC $(CFLAGS) -DKYBER_K=4 $(SOURCES) symmetric-shake.c -o libpqcrystals_kyber1024_ref.so
+
+test_sk_dash: $(SOURCESKECCAK) $(HEADERSKECCAK) sk_dash.c randombytes.c inverse.c
+	$(CC) $(CFLAGS) -DKYBER_K=2 $(SOURCESKECCAK) sk_dash.c randombytes.c inverse.c -o test_sk_dash
 
 test_inverse: $(SOURCESKECCAK) $(HEADERSKECCAK) inverse.c randombytes.c
 	$(CC) $(CFLAGS) -DKYBER_K=2 $(SOURCESKECCAK) inverse.c randombytes.c -o test_inverse
