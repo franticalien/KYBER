@@ -332,7 +332,9 @@ void indcpa_dec(uint8_t m[KYBER_INDCPA_MSGBYTES],
 
 //---------------------------------modded versions-----------------------------------
 
-
+/*
+flag = 1 := e is set to zero (t = As+e)
+*/
 void indcpa_keypair_mod(uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
                     uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES], int flag)
 {
@@ -370,6 +372,9 @@ void indcpa_keypair_mod(uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
   pack_pk(pk, &pkpv, publicseed);
 }
 
+/*
+p := [(q/2)]m
+*/
 void indcpa_enc_mod(uint8_t c[KYBER_INDCPA_BYTES],
                 const uint8_t m[KYBER_INDCPA_MSGBYTES],
                 const uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
@@ -414,6 +419,10 @@ void indcpa_enc_mod(uint8_t c[KYBER_INDCPA_BYTES],
   pack_ciphertext(c, &b, &v);
 }
 
+/*
+p := v-sk^Tu
+c=(u,v) 
+*/
 void indcpa_dec_mod(uint8_t m[KYBER_INDCPA_MSGBYTES],
                 const uint8_t c[KYBER_INDCPA_BYTES],
                 const uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES], poly *p)
