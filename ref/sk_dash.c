@@ -98,8 +98,8 @@ int main()
 	poly e;
 	uint8_t m[CRYPTO_BYTES],m_dash[CRYPTO_BYTES],flag;
 
-	flag = 1; // pk: t = As + e.
-	//flag = 1; // pk: t = As + 0.
+	flag = 0; // pk: t = As + e.
+	// flag = 1; // pk: t = As + 0.
 	int16_t diff = get_error(m,m_dash,&e,(int)flag);
 	
 	printf("\n-----------------------------------------------------------\n");
